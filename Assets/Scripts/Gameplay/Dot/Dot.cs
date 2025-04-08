@@ -9,6 +9,7 @@ public class Dot : MonoBehaviour
     private SpriteRenderer _spriteRenderer;
 
     [SerializeField] private float _scaleDownDuration = 0.5f;
+    [SerializeField] private float _fallDuration = 0.25f;
 
     private void Awake()
     {
@@ -20,6 +21,12 @@ public class Dot : MonoBehaviour
     public void SetDotPosition(Vector2Int dotPosition)
     {
         DotPosition = dotPosition;
+    }
+
+    public void Move(Vector3 targetPosition)
+    {
+        Debug.Log("Dot is moved");
+        LeanTween.move(gameObject, targetPosition, _fallDuration).setEase(LeanTweenType.easeInSine);
     }
 
     public void RandomizeColor()

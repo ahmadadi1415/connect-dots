@@ -81,10 +81,14 @@ public class DragController : MonoBehaviour
         // For instance, clear the dots if the chain is valid.
         if (_currentDraggedDots.Count >= 3)
         {
+            List<Vector2Int> connectedPositions = new();
             foreach (Dot dot in _currentDraggedDots)
             {
                 dot.Clear();
+                connectedPositions.Add(dot.DotPosition);
             }
+
+            EventManager.Publish<OnDotsConnectedMessage>(new() { ConnectedDotsPosition = connectedPositions });
         }
         _currentDraggedDots.Clear();
         _dotConnector.EndLine();
