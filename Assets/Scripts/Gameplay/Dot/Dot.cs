@@ -8,7 +8,8 @@ public class Dot : MonoBehaviour
     public Vector2Int DotPosition { get; private set; }
     private SpriteRenderer _spriteRenderer;
 
-    [SerializeField] private float _scaleDownDuration = 0.5f;
+    [SerializeField] private float _scaleDownDuration = 0.25f;
+    [SerializeField] private float _fallDuration = 1.5f;
 
     private void Awake()
     {
@@ -22,6 +23,12 @@ public class Dot : MonoBehaviour
         DotPosition = dotPosition;
     }
 
+    public void Move(Vector3 targetPosition)
+    {
+        Debug.Log("Dot is moved");
+        LeanTween.move(gameObject, targetPosition, _fallDuration).setEase(LeanTweenType.easeInCubic);
+    }
+
     public void RandomizeColor()
     {
         DotColor = PossibleColors[Random.Range(0, PossibleColors.Count)];
@@ -30,6 +37,6 @@ public class Dot : MonoBehaviour
 
     public void Clear()
     {
-        LeanTween.scale(gameObject, Vector2.zero, _scaleDownDuration).setEase(LeanTweenType.easeInSine);
+        LeanTween.scale(gameObject, Vector2.zero, _scaleDownDuration).setEase(LeanTweenType.easeOutSine).setOnComplete(() => gameObject.SetActive(false));
     }
 }
