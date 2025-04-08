@@ -79,9 +79,15 @@ public class GridManager : MonoBehaviour
 
     private void CollapseColumn(int x)
     {
-        List<Dot> dots = GetExistingDots(x);
-        foreach (Dot dot in dots)
+        for (int y = 1; y < Height; y++)
         {
+            DotTile currentTile = _grid[x, y];
+            Dot dot = currentTile.OccupyingDot;
+            if (dot == null) continue;
+
+            bool isTileBelowEmpty = _grid[x, y - 1].OccupyingDot == null;
+            Debug.Log($"Is tile below {x},{y} empty? {isTileBelowEmpty}");
+
             CollapseDot(dot);
         }
     }
@@ -91,57 +97,36 @@ public class GridManager : MonoBehaviour
         int x = dot.DotPosition.x;
         int currentY = dot.DotPosition.y;
 
-        int targetY = currentY;
-
-        // Keep moving down until we find a filled slot or reach the bottom
-        for (int y = currentY - 1; y >= 0; y--)
+        int emptyTileCount = GetEmptyTileCountBelow(x, currentY);
+        if (emptyTileCount <= 0)
         {
-            DotTile dotTile = _grid[x, y];
-            if (dotTile.OccupyingDot == null)
-            {
-                targetY = y; // Keep track of the lowest available spot
-            }
-            else
-            {
-                Debug.Log("Dot below is filled");
-                break; // Found a filled dot below — stop
-            }
+            return false;
         }
 
-        // If the dot should move
-        if (targetY != currentY)
-        {
-            // Clear current grid spot
-            DotTile currentTile = _grid[x, currentY];
-            currentTile.OccupyingDot = null;
+        int targetY = currentY - emptyTileCount;
 
-            // Update dot's internal position
-            dot.SetDotPosition(new Vector2Int(x, targetY));
+        DotTile currentTile = _grid[x, currentY];
+        DotTile targetTile = _grid[x, targetY];
+        currentTile.OccupyingDot = null;
+        targetTile.OccupyingDot = dot;
 
-            // Set new position in grid
-            DotTile targetTile = _grid[x, targetY];
-            targetTile.OccupyingDot = dot;
-
-            // Animate movement
-            dot.Move(targetTile.WorldPosition);
-
-            return true;
-        }
-
-        return false;
+        dot.SetDotPosition(new Vector2Int(x, targetY));
+        dot.Move(targetTile.WorldPosition);
+        return true;
     }
 
-
-    private List<Dot> GetExistingDots(int x)
+    private int GetEmptyTileCountBelow(int x, int y)
     {
-        List<Dot> dots = new();
-        for (int y = 0; y < Height; y++)
+        int emptyTileCount = 0;
+        // Start from one tile below the current position and go downwards
+        for (int i = y - 1; i >= 0; i--)
         {
-            DotTile currentTile = _grid[x, y];
-            bool isTileFilled = currentTile.OccupyingDot != null;
-            if (isTileFilled) dots.Add(currentTile.OccupyingDot);
+            DotTile currentTile = _grid[x, i];
+            bool isTileEmpty = currentTile.OccupyingDot == null;
+            if (isTileEmpty)
+                emptyTileCount++;
         }
 
-        return dots;
+        return emptyTileCount;
     }
 }
