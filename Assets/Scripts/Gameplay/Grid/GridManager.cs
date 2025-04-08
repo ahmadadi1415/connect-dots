@@ -14,7 +14,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject _dotPrefab;
     [SerializeField] private Transform _gridTransform;
 
-    private DotTile[,] _grid;
+    [SerializeField] private DotTile[,] _grid;
 
     void Awake()
     {
@@ -72,6 +72,7 @@ public class GridManager : MonoBehaviour
             if (positions.Exists(position => position.x == x))
             {
                 CollapseColumn(x);
+                SpawnDots(x);
                 Debug.Log($"Collapsed column: {x}");
             }
         }
