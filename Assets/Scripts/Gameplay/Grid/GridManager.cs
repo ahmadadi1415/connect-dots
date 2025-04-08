@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -72,16 +74,17 @@ public class GridManager : MonoBehaviour
             if (positions.Exists(position => position.x == x))
             {
                 CollapseColumn(x);
-                SpawnDots(x);
+                SpawnDotsAsync(x).Forget();
                 Debug.Log($"Collapsed column: {x}");
             }
         }
     }
 
-    private void SpawnDots(int x)
+    private async UniTaskVoid SpawnDotsAsync(int x)
     {
         int emptyTileCount = GetEmptyTileCountInColumn(x);
 
+        await UniTask.Yield();
         for (int i = 1; i <= emptyTileCount; i++)
         {
             int y = Height - i;
