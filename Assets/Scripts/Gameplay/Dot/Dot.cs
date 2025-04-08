@@ -35,6 +35,15 @@ public class Dot : MonoBehaviour
         _spriteRenderer.color = DotColor;
     }
 
+    public void NextColor()
+    {
+        int colorIndex = PossibleColors.IndexOf(DotColor);
+        colorIndex = (colorIndex + 1) % PossibleColors.Count;
+
+        DotColor = PossibleColors[colorIndex];
+        _spriteRenderer.color = DotColor;
+    }
+
     public void Clear()
     {
         LeanTween.scale(gameObject, Vector2.zero, _scaleDownDuration).setEase(LeanTweenType.easeOutSine).setOnComplete(() => gameObject.SetActive(false));
