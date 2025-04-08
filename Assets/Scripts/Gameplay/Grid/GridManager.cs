@@ -77,19 +77,49 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    private void SpawnDots(int x)
+    {
+        int emptyTileCount = GetEmptyTileCountInColumn(x);
+
+        for (int i = 1; i <= emptyTileCount; i++)
+        {
+            int y = Height - i;
+            DotTile tile = _grid[x, y];
+
+            Vector2 spawnPosition = tile.WorldPosition + new Vector2(0, 5 * Spacing);
+
+            GameObject dotObj = GameObject.Instantiate(_dotPrefab, spawnPosition, Quaternion.identity, _gridTransform);
+
+            // Get the Dot component and initialize it.
+            Dot dot = dotObj.GetComponent<Dot>();
+            dot.SetDotPosition(new Vector2Int(x, y));
+            dot.RandomizeColor();
+
+            dot.Move(tile.WorldPosition);
+
+            tile.OccupyingDot = dot;
+        }
+    }
+
     private void CollapseColumn(int x)
     {
-        for (int y = 1; y < Height; y++)
+        bool moved;
+        do
         {
-            DotTile currentTile = _grid[x, y];
-            Dot dot = currentTile.OccupyingDot;
-            if (dot == null) continue;
+            moved = false;
+            // Process from TOP to BOTTOM
+            for (int y = Height - 1; y >= 0; y--)
+            {
+                DotTile currentTile = _grid[x, y];
+                Dot dot = currentTile.OccupyingDot;
+                if (dot == null) continue;
 
-            bool isTileBelowEmpty = _grid[x, y - 1].OccupyingDot == null;
-            Debug.Log($"Is tile below {x},{y} empty? {isTileBelowEmpty}");
-
-            CollapseDot(dot);
-        }
+                if (CollapseDot(dot))
+                {
+                    moved = true;
+                }
+            }
+        } while (moved); // Repeat until no more moves
     }
 
     private bool CollapseDot(Dot dot)
@@ -97,21 +127,25 @@ public class GridManager : MonoBehaviour
         int x = dot.DotPosition.x;
         int currentY = dot.DotPosition.y;
 
+        // Calculate ONLY consecutive empty tiles below
         int emptyTileCount = GetEmptyTileCountBelow(x, currentY);
-        if (emptyTileCount <= 0)
+        if (emptyTileCount <= 0) return false;
+
+        int targetY = currentY - emptyTileCount;
+
+        // Validate target position
+        if (targetY < 0 || _grid[x, targetY].OccupyingDot != null)
         {
             return false;
         }
 
-        int targetY = currentY - emptyTileCount;
+        // Update grid references
+        _grid[x, currentY].OccupyingDot = null;
+        _grid[x, targetY].OccupyingDot = dot;
 
-        DotTile currentTile = _grid[x, currentY];
-        DotTile targetTile = _grid[x, targetY];
-        currentTile.OccupyingDot = null;
-        targetTile.OccupyingDot = dot;
-
+        // Update dot's position and animate
         dot.SetDotPosition(new Vector2Int(x, targetY));
-        dot.Move(targetTile.WorldPosition);
+        dot.Move(_grid[x, targetY].WorldPosition);
         return true;
     }
 
@@ -125,6 +159,25 @@ public class GridManager : MonoBehaviour
             bool isTileEmpty = currentTile.OccupyingDot == null;
             if (isTileEmpty)
                 emptyTileCount++;
+            else
+            {
+                break;
+            }
+        }
+
+        return emptyTileCount;
+    }
+
+    private int GetEmptyTileCountInColumn(int x)
+    {
+        int emptyTileCount = 0;
+        for (int y = 0; y < Height; y++)
+        {
+            DotTile currentTile = _grid[x, y];
+            bool isTileEmpty = currentTile.OccupyingDot == null;
+            if (isTileEmpty)
+                emptyTileCount++;
+
         }
 
         return emptyTileCount;
