@@ -11,7 +11,7 @@ public class DotColorDebugger : MonoBehaviour
         _camera = Camera.main;
     }
 
-    void Update()
+    private void Update()
     {
         if (Input.GetMouseButtonDown(1))
         {
