@@ -71,9 +71,8 @@ public class DragController : MonoBehaviour
             {
                 Debug.Log($"Dot connected: {_currentDraggedDots.Count}");
                 _currentDraggedDots.Add(dot);
-                _dotConnector.UpdateLine(dot.transform.position);
+                _dotConnector.ConnectLine(dot.transform.position);
             }
-
         }
     }
 
@@ -84,7 +83,7 @@ public class DragController : MonoBehaviour
         {
             foreach (Dot dot in _currentDraggedDots)
             {
-                dot.gameObject.SetActive(false);
+                dot.Clear();
             }
         }
         _currentDraggedDots.Clear();

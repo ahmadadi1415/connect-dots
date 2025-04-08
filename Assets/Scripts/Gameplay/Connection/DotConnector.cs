@@ -18,11 +18,17 @@ public class DotConnector : MonoBehaviour
         _lineRenderer.SetPosition(0, startPosition);
     }
 
-    public void UpdateLine(Vector3 position)
+    public void ConnectLine(Vector3 position)
     {
         int count = _lineRenderer.positionCount;
         _lineRenderer.positionCount = count + 1;
         _lineRenderer.SetPosition(count, position);
+    }
+
+    public void UpdateCurrentLine(Vector3 position)
+    {
+        int lastIndex = _lineRenderer.positionCount - 1;
+        _lineRenderer.SetPosition(lastIndex, position);
     }
 
     public void EndLine()

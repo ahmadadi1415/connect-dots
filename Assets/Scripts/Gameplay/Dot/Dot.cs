@@ -8,6 +8,8 @@ public class Dot : MonoBehaviour
     public Vector2Int DotPosition { get; private set; }
     private SpriteRenderer _spriteRenderer;
 
+    [SerializeField] private float _scaleDownDuration = 0.5f;
+
     private void Awake()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();
@@ -24,5 +26,10 @@ public class Dot : MonoBehaviour
     {
         DotColor = PossibleColors[Random.Range(0, PossibleColors.Count)];
         _spriteRenderer.color = DotColor;
+    }
+
+    public void Clear()
+    {
+        LeanTween.scale(gameObject, Vector2.zero, _scaleDownDuration).setEase(LeanTweenType.easeInSine);
     }
 }
