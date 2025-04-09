@@ -1,9 +1,18 @@
 using UnityEngine;
+using Zenject;
 
 public class InputHandler : MonoBehaviour
 {
     private Camera _camera;
     private Vector2 _defaultPosition = new(-1000, -1000);
+
+    private GameManager _gameManager;
+    
+    [Inject]
+    private void Construct(GameManager gameManager)
+    {
+        _gameManager = gameManager;
+    }
 
     private void Awake()
     {
@@ -12,6 +21,8 @@ public class InputHandler : MonoBehaviour
 
     private void Update()
     {
+        if (_gameManager.CurrentState != GameState.IDLE) return;
+        
         if (Input.GetMouseButtonDown(0))
         {
             HandleDotClick();

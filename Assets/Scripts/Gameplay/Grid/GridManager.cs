@@ -76,6 +76,8 @@ public class GridManager : MonoBehaviour
 
     private void OnDotsConnected(OnDotsConnectedMessage message)
     {
+        NotifyGameStateChanged(GameState.DOTS_SOLVED);
+
         List<Vector2Int> connectedPositions = message.ConnectedDotsPosition;
 
         foreach (Vector2Int position in connectedPositions)
@@ -99,12 +101,16 @@ public class GridManager : MonoBehaviour
             _dotsManager.SpawnBombDot(lastDotPosition.x, lastDotPosition.y, _coloredBombDotPrefab);
         }
 
+        NotifyGameStateChanged(GameState.GRID_LOADING);
+
         // DO: Collapse the dots
         int width = _grid.GetLength(0);
         for (int column = 0; column < width; column++)
         {
-            RefillDots(column);
+            RefillDotsColumn(column);
         }
+
+        NotifyGameStateChanged(GameState.IDLE);
     }
 
     private void OnBombExploded(OnBombExplodedMessage message)
@@ -119,7 +125,7 @@ public class GridManager : MonoBehaviour
         for (int dx = -destroyRadius; dx <= destroyRadius; dx++)
         {
             int column = position.x + dx;
-            RefillDots(column);
+            RefillDotsColumn(column);
         }
     }
 
@@ -128,12 +134,17 @@ public class GridManager : MonoBehaviour
         _shuffler.ShuffleGrid();
     }
 
-    private void RefillDots(int column)
+    private void RefillDotsColumn(int column)
     {
         if (column >= 0 && column < _grid.GetLength(0))
         {
             _dotsManager.CollapseDotsColumn(column);
             _dotsManager.SpawnDotsAsync(column, _dotPrefab, Spacing, _utility.GetEmptyTileCountInColumn(column)).Forget();
         }
+    }
+
+    private void NotifyGameStateChanged(GameState state)
+    {
+        EventManager.Publish<OnGameStateChangedMessage>(new() { State = state });
     }
 }
