@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Dot : MonoBehaviour, IDot, IConnectable
+public class NormalDot : MonoBehaviour, IDot, IConnectable
 {
     [field: SerializeField] public List<Color> PossibleColors { get; private set; } = new();
     public Color DotColor { get; private set; }

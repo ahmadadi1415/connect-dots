@@ -20,12 +20,12 @@ public class DotColorDebugger : MonoBehaviour
         }
     }
 
-    private Dot GetDotAtPosition(Vector2 position)
+    private NormalDot GetDotAtPosition(Vector2 position)
     {
         RaycastHit2D hit = Physics2D.Raycast(position, Vector2.zero);
         if (hit.collider != null)
         {
-            return hit.collider.GetComponent<Dot>();
+            return hit.collider.GetComponent<NormalDot>();
         }
         return null;
     }

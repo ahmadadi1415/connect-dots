@@ -64,7 +64,7 @@ public class GridManager : MonoBehaviour
                 GameObject dotObj = GameObject.Instantiate(_dotPrefab, pos, Quaternion.identity, _gridTransform);
 
                 // Get the Dot component and initialize it.
-                Dot dot = dotObj.GetComponent<Dot>();
+                NormalDot dot = dotObj.GetComponent<NormalDot>();
                 dot.SetDotPosition(new Vector2Int(x, y));
                 dot.RandomizeColor();
 
@@ -161,7 +161,7 @@ public class GridManager : MonoBehaviour
             GameObject dotObj = GameObject.Instantiate(_dotPrefab, spawnPosition, Quaternion.identity, _gridTransform);
 
             // Get the Dot component and initialize it.
-            Dot dot = dotObj.GetComponent<Dot>();
+            NormalDot dot = dotObj.GetComponent<NormalDot>();
             dot.SetDotPosition(new Vector2Int(x, y));
             dot.RandomizeColor();
 

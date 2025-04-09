@@ -44,14 +44,14 @@ public class DragController : MonoBehaviour
         // Try to pick a dot from the starting position.
         IDot dot = GetDotAtPosition(startPos);
 
-        if (dot != null && dot is Dot normalDot)
+        if (dot != null && dot is NormalDot normalDot)
         {
             _currentDraggedDots.Clear();
             _currentDraggedDots.Add(dot);
             _currentDragColor = normalDot.DotColor;
             _dotConnector.StartLine(_currentDragColor, normalDot.transform.position);
 
-            Debug.Log($"Drag started: {_currentDragColor}");
+            // Debug.Log($"Drag started: {_currentDragColor}");
         }
     }
 
