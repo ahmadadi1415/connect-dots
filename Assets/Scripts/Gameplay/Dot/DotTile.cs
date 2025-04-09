@@ -3,6 +3,6 @@ using UnityEngine;
 
 public class DotTile
 {
-    public Dot OccupyingDot;
+    public IDot OccupyingDot;
     public Vector2 WorldPosition;
 }

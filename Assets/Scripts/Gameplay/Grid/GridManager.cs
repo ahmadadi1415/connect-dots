@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -11,9 +12,22 @@ public class GridManager : MonoBehaviour
 
     [Header("Dot Settings")]
     [SerializeField] private GameObject _dotPrefab;
+    [SerializeField] private GameObject _bombDotPrefab;
     [SerializeField] private Transform _gridTransform;
 
     [SerializeField] private DotTile[,] _grid;
+
+    private readonly Vector2Int[] _directions = new Vector2Int[]
+    {
+        new Vector2Int(-1,  0), // left
+        new Vector2Int( 1,  0), // right
+        new Vector2Int( 0,  1), // up
+        new Vector2Int( 0, -1), // down
+        new Vector2Int(-1,  1), // top-left
+        new Vector2Int( 1,  1), // top-right
+        new Vector2Int(-1, -1), // bottom-left
+        new Vector2Int( 1, -1)  // bottom-right
+    };
 
     void Awake()
     {
@@ -24,12 +38,15 @@ public class GridManager : MonoBehaviour
     private void OnEnable()
     {
         EventManager.Subscribe<OnDotsConnectedMessage>(OnDotsConnected);
+        EventManager.Subscribe<OnBombExplodedMessage>(OnBombExploded);
     }
 
     private void OnDisable()
     {
         EventManager.Unsubscribe<OnDotsConnectedMessage>(OnDotsConnected);
+        EventManager.Unsubscribe<OnBombExplodedMessage>(OnBombExploded);
     }
+
 
     void CreateGrid()
     {
@@ -57,22 +74,46 @@ public class GridManager : MonoBehaviour
 
     private void OnDotsConnected(OnDotsConnectedMessage message)
     {
-        List<Vector2Int> positions = message.ConnectedDotsPosition;
+        List<Vector2Int> connectedPositions = message.ConnectedDotsPosition;
 
-        foreach (Vector2Int position in positions)
+        foreach (Vector2Int position in connectedPositions)
         {
             _grid[position.x, position.y].OccupyingDot = null;
+        }
+
+        if (connectedPositions.Count == 6)
+        {
+            Vector2Int lastDotPosition = connectedPositions[^1];
+            SpawnBombDot(lastDotPosition.x, lastDotPosition.y);
         }
 
         // DO: Collapse the dots
         for (int x = 0; x < Width; x++)
         {
             // DO: Collapse only the cleared dots column
-            if (positions.Exists(position => position.x == x))
+            if (connectedPositions.Exists(position => position.x == x))
             {
                 CollapseColumn(x);
                 SpawnDotsAsync(x).Forget();
                 Debug.Log($"Collapsed column: {x}");
+            }
+        }
+    }
+
+    private void OnBombExploded(OnBombExplodedMessage message)
+    {
+        Vector2Int position = message.Position;
+        _grid[position.x, position.y].OccupyingDot = null;
+
+        DestroyDotsAround(position);
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            int column = position.x + dx;
+
+            if (column >= 0 && column < Width)
+            {
+                CollapseColumn(column);
+                SpawnDotsAsync(column).Forget();
             }
         }
     }
@@ -102,6 +143,19 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    private void SpawnBombDot(int x, int y)
+    {
+        DotTile tile = _grid[x, y];
+
+        GameObject dotObj = GameObject.Instantiate(_bombDotPrefab, tile.WorldPosition + BombDot.Offset, Quaternion.identity, _gridTransform);
+
+        // Get the Dot component and initialize it.
+        IDot dot = dotObj.GetComponent<IDot>();
+        dot.SetDotPosition(new Vector2Int(x, y));
+
+        tile.OccupyingDot = dot;
+    }
+
     private void CollapseColumn(int x)
     {
         bool moved;
@@ -112,7 +166,7 @@ public class GridManager : MonoBehaviour
             for (int y = Height - 1; y >= 0; y--)
             {
                 DotTile currentTile = _grid[x, y];
-                Dot dot = currentTile.OccupyingDot;
+                IDot dot = currentTile.OccupyingDot;
                 if (dot == null) continue;
 
                 if (CollapseDot(dot))
@@ -123,7 +177,7 @@ public class GridManager : MonoBehaviour
         } while (moved); // Repeat until no more moves
     }
 
-    private bool CollapseDot(Dot dot)
+    private bool CollapseDot(IDot dot)
     {
         int x = dot.DotPosition.x;
         int currentY = dot.DotPosition.y;
@@ -182,5 +236,25 @@ public class GridManager : MonoBehaviour
         }
 
         return emptyTileCount;
+    }
+
+    private void DestroyDotsAround(Vector2Int position)
+    {
+        foreach (Vector2Int dir in _directions)
+        {
+            Vector2Int neighborPos = position + dir;
+
+            bool isInsideGrid = neighborPos.x >= 0 && neighborPos.x < Width && neighborPos.y >= 0 && neighborPos.y < Height;
+
+            if (isInsideGrid)
+            {
+                DotTile tile = _grid[neighborPos.x, neighborPos.y];
+                IDot dot = tile.OccupyingDot;
+
+                dot?.Clear(); // or your custom destroy logic
+
+                tile.OccupyingDot = null;
+            }
+        }
     }
 }

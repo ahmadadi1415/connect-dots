@@ -41,7 +41,6 @@ public class DragController : MonoBehaviour
     void HandleDragStart(Vector2 startPos)
     {
         // Try to pick a dot from the starting position.
-
         Dot dot = GetDotAtPosition(startPos);
         if (dot != null)
         {
