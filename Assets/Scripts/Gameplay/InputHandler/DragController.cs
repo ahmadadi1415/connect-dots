@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class DragController : MonoBehaviour
@@ -79,25 +80,21 @@ public class DragController : MonoBehaviour
     void HandleDragEnd()
     {
         // For instance, clear the dots if the chain is valid.
+        ColoredBombDot coloredBombDot = _currentDraggedDots.FirstOrDefault(dot => dot is ColoredBombDot) as ColoredBombDot;
         if (_currentDraggedDots.Count >= 3)
         {
-            Color bombDotColor = Color.black;
-            bool isContainColoredBomb = false;
+            bool isContainColoredBomb = coloredBombDot != null;
             List<Vector2Int> connectedPositions = new();
             foreach (IDot dot in _currentDraggedDots)
             {
                 dot.Clear();
                 connectedPositions.Add(dot.DotPosition);
-
-                if (dot is ColoredBombDot bomb)
-                {
-                    bombDotColor = bomb.DotColor;
-                    isContainColoredBomb = true;
-                }
             }
 
-            EventManager.Publish<OnDotsConnectedMessage>(new() { ConnectedDotsPosition = connectedPositions, IsContainColoredBomb = isContainColoredBomb, BombDotColor = bombDotColor });
+            EventManager.Publish<OnDotsConnectedMessage>(new() { ConnectedDotsPosition = connectedPositions, IsContainColoredBomb = isContainColoredBomb, BombDotColor = coloredBombDot?.DotColor ?? Color.black });
         }
+
+        coloredBombDot?.ResetColor();
         _currentDraggedDots.Clear();
         _dotConnector.EndLine();
 
