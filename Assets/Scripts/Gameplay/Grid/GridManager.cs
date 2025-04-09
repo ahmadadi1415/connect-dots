@@ -19,6 +19,8 @@ public class GridManager : MonoBehaviour
 
     [SerializeField] private DotTile[,] _grid;
 
+    private GridShuffler shuffler;
+
     private readonly Vector2Int[] _directions = new Vector2Int[]
     {
         new(-1,  0), // left
@@ -34,6 +36,8 @@ public class GridManager : MonoBehaviour
     void Awake()
     {
         _grid = new DotTile[Width, Height];
+        shuffler = new(_grid, new());
+
         CreateGrid();
     }
 
@@ -293,49 +297,6 @@ public class GridManager : MonoBehaviour
 
     private void OnGridShuffled(OnGridShuffledMessage message)
     {
-        ShuffleGrid();
+        shuffler.ShuffleGrid();
     }
-
-    private void ShuffleGrid()
-    {
-        List<IDot> allDots = new();
-
-        // Step 1: Collect all non-null dots
-        for (int x = 0; x < Width; x++)
-        {
-            for (int y = 0; y < Height; y++)
-            {
-                if (_grid[x, y].OccupyingDot != null)
-                {
-                    allDots.Add(_grid[x, y].OccupyingDot);
-                }
-            }
-        }
-
-        // Step 2: Shuffle the dots
-        for (int i = allDots.Count - 1; i > 0; i--)
-        {
-            int j = UnityEngine.Random.Range(0, i + 1);
-            (allDots[i], allDots[j]) = (allDots[j], allDots[i]);
-        }
-
-        // Step 3: Reassign shuffled dots back to grid
-        int dotIndex = 0;
-        for (int x = 0; x < Width; x++)
-        {
-            for (int y = 0; y < Height; y++)
-            {
-                DotTile tile = _grid[x, y];
-
-                if (tile.OccupyingDot != null)
-                {
-                    IDot newDot = allDots[dotIndex++];
-                    tile.OccupyingDot = newDot;
-                    newDot.SetDotPosition(new Vector2Int(x, y));
-                    newDot.Move(tile.WorldPosition);
-                }
-            }
-        }
-    }
-
 }
