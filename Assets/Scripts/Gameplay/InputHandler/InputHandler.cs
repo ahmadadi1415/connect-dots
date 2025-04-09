@@ -22,7 +22,7 @@ public class InputHandler : MonoBehaviour
     private void Update()
     {
         if (_gameManager.CurrentState != GameState.IDLE) return;
-        
+
         if (Input.GetMouseButtonDown(0))
         {
             HandleDotClick();
@@ -61,15 +61,5 @@ public class InputHandler : MonoBehaviour
     {
         Vector2 position = _camera.ScreenToWorldPoint(Input.mousePosition);
         EventManager.Publish<OnDragEventMessage>(new() { State = state, Position = position });
-    }
-
-    private IDot GetDotAtPosition(Vector2 position)
-    {
-        RaycastHit2D hit = Physics2D.Raycast(position, Vector2.zero);
-        if (hit.collider != null)
-        {
-            return hit.collider.GetComponent<IDot>();
-        }
-        return null;
     }
 }
