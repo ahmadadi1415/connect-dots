@@ -1,11 +1,5 @@
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
-
-public enum GridState
-{
-    IDLE, CONNECTING, SOLVING, REFILL,
-}
 
 public class GridManager : MonoBehaviour
 {
@@ -20,15 +14,16 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject _coloredBombDotPrefab;
     [SerializeField] private Transform _gridTransform;
 
+    [Header("Bomb Settings")]
+    [SerializeField] private int _normalBombLineLength = 6;
+    [SerializeField] private int _coloredBombLineLength = 9;
+
     [SerializeField] private DotTile[,] _grid;
-    [field: SerializeField] public GridState CurrentState { get; private set; } = GridState.IDLE;
 
     private GridShuffler _shuffler;
     private DotsManager _dotsManager;
     private BombHandler _bombHandler;
     private GridUtility _utility;
-
-
 
     void Awake()
     {
@@ -81,8 +76,6 @@ public class GridManager : MonoBehaviour
 
     private void OnDotsConnected(OnDotsConnectedMessage message)
     {
-        CurrentState = GridState.SOLVING;
-
         List<Vector2Int> connectedPositions = message.ConnectedDotsPosition;
 
         foreach (Vector2Int position in connectedPositions)
@@ -96,18 +89,19 @@ public class GridManager : MonoBehaviour
         }
 
         Vector2Int lastDotPosition = connectedPositions[^1];
-        if (connectedPositions.Count == 6)
+        if (connectedPositions.Count == _normalBombLineLength)
         {
             _dotsManager.SpawnBombDot(lastDotPosition.x, lastDotPosition.y, _normalBombDotPrefab);
         }
 
-        if (connectedPositions.Count == 9)
+        if (connectedPositions.Count == _coloredBombLineLength)
         {
             _dotsManager.SpawnBombDot(lastDotPosition.x, lastDotPosition.y, _coloredBombDotPrefab);
         }
 
         // DO: Collapse the dots
-        for (int column = 0; column < Width; column++)
+        int width = _grid.GetLength(0);
+        for (int column = 0; column < width; column++)
         {
             RefillDots(column);
         }
