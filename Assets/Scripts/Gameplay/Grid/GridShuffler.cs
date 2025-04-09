@@ -3,8 +3,9 @@ using UnityEngine;
 
 public class GridShuffler
 {
-    private DotTile[,] _grid;
-    private List<IDot> _allDots;
+    private readonly DotTile[,] _grid;
+    private readonly List<IDot> _allDots;
+    
     public GridShuffler(DotTile[,] grid, List<IDot> allDots)
     {
         _grid = grid;
