@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class DragController : MonoBehaviour
@@ -7,7 +8,7 @@ public class DragController : MonoBehaviour
     [SerializeField] private DotConnector _dotConnector;
     private ConnectionValidator _connectionValidator = new();
 
-    private List<Dot> _currentDraggedDots = new();
+    private List<IDot> _currentDraggedDots = new();
     private Color _currentDragColor;
 
     private void OnEnable()
@@ -41,16 +42,16 @@ public class DragController : MonoBehaviour
     void HandleDragStart(Vector2 startPos)
     {
         // Try to pick a dot from the starting position.
+        IDot dot = GetDotAtPosition(startPos);
 
-        Dot dot = GetDotAtPosition(startPos);
-        if (dot != null)
+        if (dot != null && dot is NormalDot normalDot)
         {
             _currentDraggedDots.Clear();
             _currentDraggedDots.Add(dot);
-            _currentDragColor = dot.DotColor;
-            _dotConnector.StartLine(_currentDragColor, dot.transform.position);
+            _currentDragColor = normalDot.DotColor;
+            _dotConnector.StartLine(_currentDragColor, normalDot.transform.position);
 
-            Debug.Log($"Drag started: {_currentDragColor}");
+            // Debug.Log($"Drag started: {_currentDragColor}");
         }
     }
 
@@ -59,19 +60,19 @@ public class DragController : MonoBehaviour
         if (_currentDraggedDots.Count == 0)
             return;
 
-        Dot dot = GetDotAtPosition(currentPos);
+        IDot dot = GetDotAtPosition(currentPos);
 
         bool isNewDot = dot != null && !_currentDraggedDots.Contains(dot);
         if (isNewDot)
         {
-            // Debug.Log($"Drag updated: {dot.DotColor}");
+            IDot lastDot = _currentDraggedDots[^1];
 
-            Dot lastDot = _currentDraggedDots[^1];
-            if (_connectionValidator.IsValidConnection(lastDot, dot))
+            if (_connectionValidator.IsValidConnection(lastDot as IConnectable, dot as IConnectable))
             {
                 Debug.Log($"Dot connected: {_currentDraggedDots.Count}");
                 _currentDraggedDots.Add(dot);
-                _dotConnector.ConnectLine(dot.transform.position);
+
+                _dotConnector.ConnectLine((dot as MonoBehaviour).transform.position);
             }
         }
     }
@@ -79,29 +80,33 @@ public class DragController : MonoBehaviour
     void HandleDragEnd()
     {
         // For instance, clear the dots if the chain is valid.
+        ColoredBombDot coloredBombDot = _currentDraggedDots.FirstOrDefault(dot => dot is ColoredBombDot) as ColoredBombDot;
         if (_currentDraggedDots.Count >= 3)
         {
+            bool isContainColoredBomb = coloredBombDot != null;
             List<Vector2Int> connectedPositions = new();
-            foreach (Dot dot in _currentDraggedDots)
+            foreach (IDot dot in _currentDraggedDots)
             {
                 dot.Clear();
                 connectedPositions.Add(dot.DotPosition);
             }
 
-            EventManager.Publish<OnDotsConnectedMessage>(new() { ConnectedDotsPosition = connectedPositions });
+            EventManager.Publish<OnDotsConnectedMessage>(new() { ConnectedDotsPosition = connectedPositions, IsContainColoredBomb = isContainColoredBomb, BombDotColor = coloredBombDot?.DotColor ?? Color.black });
         }
+
+        coloredBombDot?.ResetColor();
         _currentDraggedDots.Clear();
         _dotConnector.EndLine();
 
         Debug.Log("Drag ended");
     }
 
-    private Dot GetDotAtPosition(Vector2 position)
+    private IDot GetDotAtPosition(Vector2 position)
     {
         RaycastHit2D hit = Physics2D.Raycast(position, Vector2.zero);
         if (hit.collider != null)
         {
-            return hit.collider.GetComponent<Dot>();
+            return hit.collider.GetComponent<IDot>();
         }
         return null;
     }
