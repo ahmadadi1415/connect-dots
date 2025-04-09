@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Dot : MonoBehaviour, IDot
+public class Dot : MonoBehaviour, IDot, IConnectable
 {
     [field: SerializeField] public List<Color> PossibleColors { get; private set; } = new();
     public Color DotColor { get; private set; }
@@ -39,8 +39,12 @@ public class Dot : MonoBehaviour, IDot
     {
         int colorIndex = PossibleColors.IndexOf(DotColor);
         colorIndex = (colorIndex + 1) % PossibleColors.Count;
+        SetDotColor(PossibleColors[colorIndex]);
+    }
 
-        DotColor = PossibleColors[colorIndex];
+    public void SetDotColor(Color dotColor)
+    {
+        DotColor = dotColor;
         _spriteRenderer.color = DotColor;
     }
 
@@ -48,4 +52,5 @@ public class Dot : MonoBehaviour, IDot
     {
         LeanTween.scale(gameObject, Vector2.zero, _scaleDownDuration).setEase(LeanTweenType.easeOutSine).setOnComplete(() => gameObject.SetActive(false));
     }
+
 }

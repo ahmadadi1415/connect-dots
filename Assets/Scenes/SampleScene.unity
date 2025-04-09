@@ -156,7 +156,8 @@ MonoBehaviour:
   <Width>k__BackingField: 7
   <Spacing>k__BackingField: 2
   _dotPrefab: {fileID: 5638898888193196024, guid: aa7d13f1e10863e49bddb4a265ce9bde, type: 3}
-  _bombDotPrefab: {fileID: 5638898888193196024, guid: 05874ec94abf6314cb1d45e8e39a5293, type: 3}
+  _normalBombDotPrefab: {fileID: 5638898888193196024, guid: 05874ec94abf6314cb1d45e8e39a5293, type: 3}
+  _coloredBombDotPrefab: {fileID: 5638898888193196024, guid: b8189def170157e49bb7cf85901f76eb, type: 3}
   _gridTransform: {fileID: 1055980365}
 --- !u!4 &262044651
 Transform:

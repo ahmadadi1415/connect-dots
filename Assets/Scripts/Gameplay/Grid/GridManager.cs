@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -12,21 +13,22 @@ public class GridManager : MonoBehaviour
 
     [Header("Dot Settings")]
     [SerializeField] private GameObject _dotPrefab;
-    [SerializeField] private GameObject _bombDotPrefab;
+    [SerializeField] private GameObject _normalBombDotPrefab;
+    [SerializeField] private GameObject _coloredBombDotPrefab;
     [SerializeField] private Transform _gridTransform;
 
     [SerializeField] private DotTile[,] _grid;
 
     private readonly Vector2Int[] _directions = new Vector2Int[]
     {
-        new Vector2Int(-1,  0), // left
-        new Vector2Int( 1,  0), // right
-        new Vector2Int( 0,  1), // up
-        new Vector2Int( 0, -1), // down
-        new Vector2Int(-1,  1), // top-left
-        new Vector2Int( 1,  1), // top-right
-        new Vector2Int(-1, -1), // bottom-left
-        new Vector2Int( 1, -1)  // bottom-right
+        new(-1,  0), // left
+        new( 1,  0), // right
+        new( 0,  1), // up
+        new( 0, -1), // down
+        new(-1,  1), // top-left
+        new( 1,  1), // top-right
+        new(-1, -1), // bottom-left
+        new( 1, -1)  // bottom-right
     };
 
     void Awake()
@@ -48,7 +50,7 @@ public class GridManager : MonoBehaviour
     }
 
 
-    void CreateGrid()
+    private void CreateGrid()
     {
         // Calculate the starting position so that the grid is centered.
         Vector2 startPos = new(-Width / 2.0f, -Height / 2.0f);
@@ -81,22 +83,29 @@ public class GridManager : MonoBehaviour
             _grid[position.x, position.y].OccupyingDot = null;
         }
 
+        if (message.IsContainColoredBomb)
+        {
+            ExplodeColoredBombDot(message.BombDotColor);
+        }
+
         if (connectedPositions.Count == 6)
         {
             Vector2Int lastDotPosition = connectedPositions[^1];
-            SpawnBombDot(lastDotPosition.x, lastDotPosition.y);
+            SpawnBombDot(lastDotPosition.x, lastDotPosition.y, _normalBombDotPrefab);
         }
+
+        if (connectedPositions.Count == 9)
+        {
+            Vector2Int lastDotPosition = connectedPositions[^1];
+            SpawnBombDot(lastDotPosition.x, lastDotPosition.y, _coloredBombDotPrefab);
+        }
+
 
         // DO: Collapse the dots
         for (int x = 0; x < Width; x++)
         {
-            // DO: Collapse only the cleared dots column
-            if (connectedPositions.Exists(position => position.x == x))
-            {
-                CollapseColumn(x);
-                SpawnDotsAsync(x).Forget();
-                Debug.Log($"Collapsed column: {x}");
-            }
+            CollapseColumn(x).Forget();
+            SpawnDotsAsync(x).Forget();
         }
     }
 
@@ -112,8 +121,27 @@ public class GridManager : MonoBehaviour
 
             if (column >= 0 && column < Width)
             {
-                CollapseColumn(column);
+                CollapseColumn(column).Forget();
                 SpawnDotsAsync(column).Forget();
+            }
+        }
+    }
+
+    private void ExplodeColoredBombDot(Color explodedColor)
+    {
+        for (int y = 0; y < Width; y++)
+        {
+            for (int x = 0; x < Height; x++)
+            {
+                IDot dot = _grid[x, y].OccupyingDot;
+                if (dot is IConnectable connectable)
+                {
+                    if (connectable.DotColor.Equals(explodedColor))
+                    {
+                        dot.Clear();
+                        _grid[x, y].OccupyingDot = null;
+                    }
+                }
             }
         }
     }
@@ -143,21 +171,23 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    private void SpawnBombDot(int x, int y)
+    private void SpawnBombDot(int x, int y, GameObject _bombDotPrefab)
     {
         DotTile tile = _grid[x, y];
 
-        GameObject dotObj = GameObject.Instantiate(_bombDotPrefab, tile.WorldPosition + BombDot.Offset, Quaternion.identity, _gridTransform);
+        GameObject dotObj = GameObject.Instantiate(_bombDotPrefab, tile.WorldPosition, Quaternion.identity, _gridTransform);
 
         // Get the Dot component and initialize it.
         IDot dot = dotObj.GetComponent<IDot>();
         dot.SetDotPosition(new Vector2Int(x, y));
+        dot.Move(tile.WorldPosition);
 
         tile.OccupyingDot = dot;
     }
 
-    private void CollapseColumn(int x)
+    private async UniTaskVoid CollapseColumn(int x)
     {
+        await UniTask.Yield();
         bool moved;
         do
         {
