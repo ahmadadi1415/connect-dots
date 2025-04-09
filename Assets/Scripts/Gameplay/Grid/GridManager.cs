@@ -41,12 +41,14 @@ public class GridManager : MonoBehaviour
     {
         EventManager.Subscribe<OnDotsConnectedMessage>(OnDotsConnected);
         EventManager.Subscribe<OnBombExplodedMessage>(OnBombExploded);
+        EventManager.Subscribe<OnGridShuffledMessage>(OnGridShuffled);
     }
 
     private void OnDisable()
     {
         EventManager.Unsubscribe<OnDotsConnectedMessage>(OnDotsConnected);
         EventManager.Unsubscribe<OnBombExplodedMessage>(OnBombExploded);
+        EventManager.Unsubscribe<OnGridShuffledMessage>(OnGridShuffled);
     }
 
 
@@ -287,4 +289,53 @@ public class GridManager : MonoBehaviour
             }
         }
     }
+
+
+    private void OnGridShuffled(OnGridShuffledMessage message)
+    {
+        ShuffleGrid();
+    }
+
+    private void ShuffleGrid()
+    {
+        List<IDot> allDots = new();
+
+        // Step 1: Collect all non-null dots
+        for (int x = 0; x < Width; x++)
+        {
+            for (int y = 0; y < Height; y++)
+            {
+                if (_grid[x, y].OccupyingDot != null)
+                {
+                    allDots.Add(_grid[x, y].OccupyingDot);
+                }
+            }
+        }
+
+        // Step 2: Shuffle the dots
+        for (int i = allDots.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            (allDots[i], allDots[j]) = (allDots[j], allDots[i]);
+        }
+
+        // Step 3: Reassign shuffled dots back to grid
+        int dotIndex = 0;
+        for (int x = 0; x < Width; x++)
+        {
+            for (int y = 0; y < Height; y++)
+            {
+                DotTile tile = _grid[x, y];
+
+                if (tile.OccupyingDot != null)
+                {
+                    IDot newDot = allDots[dotIndex++];
+                    tile.OccupyingDot = newDot;
+                    newDot.SetDotPosition(new Vector2Int(x, y));
+                    newDot.Move(tile.WorldPosition);
+                }
+            }
+        }
+    }
+
 }
