@@ -30,15 +30,15 @@ public class GridManager : MonoBehaviour
 
     public bool IsGridSolvable { get; private set; } = true;
 
-    void Awake()
+    private void Awake()
     {
         _grid = new DotTile[Width, Height];
         _utility = new(_grid);
         _shuffler = new(_grid, new());
         _dotsManager = new(_grid, _gridTransform, _utility);
         _bombHandler = new(_grid);
-
         _solver = new GridSolver(_grid, _utility);
+        
         _solverConnector = GetComponentInChildren<DotConnector>();
 
         CreateGrid();
@@ -90,10 +90,12 @@ public class GridManager : MonoBehaviour
 
         ResetSolvableState();
 
-        List<Vector2Int> connectedPositions = message.ConnectedDotsPosition;
+        List<IDot> connectedPositions = message.ConnectedDots;
 
-        foreach (Vector2Int position in connectedPositions)
+        foreach (IDot dot in connectedPositions)
         {
+            dot.Clear();
+            Vector2Int position = dot.DotPosition;
             _grid[position.x, position.y].OccupyingDot = null;
         }
 
@@ -102,7 +104,7 @@ public class GridManager : MonoBehaviour
             _bombHandler.ExplodeColoredBombDot(message.BombDotColor);
         }
 
-        Vector2Int lastDotPosition = connectedPositions[^1];
+        Vector2Int lastDotPosition = connectedPositions[^1].DotPosition;
         if (connectedPositions.Count == _normalBombLineLength)
         {
             _dotsManager.SpawnBombDot(lastDotPosition.x, lastDotPosition.y, _normalBombDotPrefab);
@@ -119,7 +121,7 @@ public class GridManager : MonoBehaviour
         int width = _grid.GetLength(0);
         for (int column = 0; column < width; column++)
         {
-            RefillDotsColumn(column);
+            _dotsManager.RefillDotsColumn(column, Spacing, _dotPrefab);
         }
 
         NotifyGameStateChanged(GameState.IDLE);
@@ -139,7 +141,7 @@ public class GridManager : MonoBehaviour
         for (int dx = -destroyRadius; dx <= destroyRadius; dx++)
         {
             int column = position.x + dx;
-            RefillDotsColumn(column);
+            _dotsManager.RefillDotsColumn(column, Spacing, _dotPrefab);
         }
     }
 
@@ -152,37 +154,24 @@ public class GridManager : MonoBehaviour
     private void OnHintRequested(OnHintRequestedMessage message)
     {
         Debug.Log("Hint requested");
+
+        // DO: Prevent solution searching if the grid already unsolvable
+        if (!IsGridSolvable) {
+            return;
+        }
+
         if (IsGridSolvable && _solver.TryFindLineSolution(out List<Vector2Int> solution))
         {
             IsGridSolvable = true;
-
             _solverConnector.EndLine();
-
-            Vector2Int startDotPosition = solution[0];
-            Vector3 startPosition = _grid[startDotPosition.x, startDotPosition.y].WorldPosition;
-            _solverConnector.StartLine(Color.white, startPosition);
-
-            for (int i = 1; i < solution.Count; i++)
-            {
-                Vector2Int dotPosition = solution[i];
-                Vector3 position = _grid[dotPosition.x, dotPosition.y].WorldPosition;
-
-                _solverConnector.ConnectLine(position);
-            }
+            _solverConnector.CreateLine(Color.white, solution, _grid);
         }
         else {
+            // DO: Mark grid as unsolvable
             IsGridSolvable = false;
         }
     }
 
-    private void RefillDotsColumn(int column)
-    {
-        if (column >= 0 && column < _grid.GetLength(0))
-        {
-            _dotsManager.CollapseDotsColumn(column);
-            _dotsManager.SpawnDotsAsync(column, _dotPrefab, Spacing, _utility.GetEmptyTileCountInColumn(column)).Forget();
-        }
-    }
 
     private void NotifyGameStateChanged(GameState state)
     {
@@ -191,6 +180,7 @@ public class GridManager : MonoBehaviour
 
     private void ResetSolvableState()
     {
+        // DO: Reset grid state as solvable
         IsGridSolvable = true;
         _solverConnector.EndLine();
     }

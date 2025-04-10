@@ -51,4 +51,19 @@ public class DotConnector : MonoBehaviour
         _lineRenderer.positionCount = 0;
         _dotPositions.Clear();
     }
+
+    public void CreateLine(Color color, List<Vector2Int> solution, DotTile[,] grid)
+    {
+        Vector2Int startDotPosition = solution[0];
+        Vector3 startPosition = grid[startDotPosition.x, startDotPosition.y].WorldPosition;
+        StartLine(color, startPosition);
+
+        for (int i = 1; i < solution.Count; i++)
+        {
+            Vector2Int dotPosition = solution[i];
+            Vector3 position = grid[dotPosition.x, dotPosition.y].WorldPosition;
+
+            ConnectLine(position);
+        }
+    }
 }

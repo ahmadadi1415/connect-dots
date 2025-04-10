@@ -3,7 +3,7 @@ using UnityEngine;
 
 public struct OnDotsConnectedMessage
 {
-    public List<Vector2Int> ConnectedDotsPosition;
+    public List<IDot> ConnectedDots;
     public Color BombDotColor;
     public bool IsContainColoredBomb;
 }
