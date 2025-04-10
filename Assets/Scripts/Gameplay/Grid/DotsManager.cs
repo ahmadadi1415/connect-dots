@@ -102,18 +102,13 @@ public class DotsManager
         return true;
     }
 
-    private int GetEmptyTileCountInColumn(int x)
+
+    public void RefillDotsColumn(int column, float spacing, GameObject dotPrefab)
     {
-        int emptyTileCount = 0;
-        for (int y = 0; y < _grid.GetLength(1); y++)
+        if (column >= 0 && column < _grid.GetLength(0))
         {
-            DotTile currentTile = _grid[x, y];
-            bool isTileEmpty = currentTile.OccupyingDot == null;
-            if (isTileEmpty)
-                emptyTileCount++;
-
+            CollapseDotsColumn(column);
+            SpawnDotsAsync(column, dotPrefab, spacing, _utility.GetEmptyTileCountInColumn(column)).Forget();
         }
-
-        return emptyTileCount;
     }
 }

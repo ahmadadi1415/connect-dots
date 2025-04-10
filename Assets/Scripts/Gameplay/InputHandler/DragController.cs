@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -39,7 +38,7 @@ public class DragController : MonoBehaviour
         }
     }
 
-    void HandleDragStart(Vector2 startPos)
+    private void HandleDragStart(Vector2 startPos)
     {
         // Try to pick a dot from the starting position.
         IDot dot = GetDotAtPosition(startPos);
@@ -55,7 +54,7 @@ public class DragController : MonoBehaviour
         }
     }
 
-    void HandleDragUpdate(Vector2 currentPos)
+    private void HandleDragUpdate(Vector2 currentPos)
     {
         if (_currentDraggedDots.Count == 0)
             return;
@@ -75,26 +74,26 @@ public class DragController : MonoBehaviour
                 _dotConnector.ConnectLine((dot as MonoBehaviour).transform.position);
             }
         }
+
+        _dotConnector.UpdateCurrentLine(currentPos);
     }
 
-    void HandleDragEnd()
+    private void HandleDragEnd()
     {
         // For instance, clear the dots if the chain is valid.
-        ColoredBombDot coloredBombDot = _currentDraggedDots.FirstOrDefault(dot => dot is ColoredBombDot) as ColoredBombDot;
+        var coloredBombDots = _currentDraggedDots.FindAll(dot => dot is ColoredBombDot);
         if (_currentDraggedDots.Count >= 3)
         {
-            bool isContainColoredBomb = coloredBombDot != null;
-            List<Vector2Int> connectedPositions = new();
-            foreach (IDot dot in _currentDraggedDots)
+            bool isContainColoredBomb = coloredBombDots.Count > 0;
+            EventManager.Publish<OnDotsConnectedMessage>(new()
             {
-                dot.Clear();
-                connectedPositions.Add(dot.DotPosition);
-            }
-
-            EventManager.Publish<OnDotsConnectedMessage>(new() { ConnectedDotsPosition = connectedPositions, IsContainColoredBomb = isContainColoredBomb, BombDotColor = coloredBombDot?.DotColor ?? Color.black });
+                ConnectedDots = _currentDraggedDots,
+                IsContainColoredBomb = isContainColoredBomb,
+                BombDotColor = _currentDragColor
+            });
         }
 
-        coloredBombDot?.ResetColor();
+        coloredBombDots.ForEach(dot => (dot as ColoredBombDot).ResetColor());
         _currentDraggedDots.Clear();
         _dotConnector.EndLine();
 

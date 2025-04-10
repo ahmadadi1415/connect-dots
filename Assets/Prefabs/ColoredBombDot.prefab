@@ -115,4 +115,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _explodingDuration: 0.15
-  _fallDuration: 1.5
+  _fallDuration: 0.25

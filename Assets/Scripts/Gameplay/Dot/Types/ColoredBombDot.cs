@@ -44,7 +44,6 @@ public class ColoredBombDot : MonoBehaviour, IDot, IConnectable
         LeanTween.scale(gameObject, new Vector2(1.5f, 1.5f), _explodingDuration).setEase(LeanTweenType.easeOutSine).setOnComplete(() =>
         {
             gameObject.SetActive(false);
-            EventManager.Publish<OnColoredBombExplodedMessage>(new() { Position = DotPosition, ExplodedColor = DotColor });
         });
     }
 }

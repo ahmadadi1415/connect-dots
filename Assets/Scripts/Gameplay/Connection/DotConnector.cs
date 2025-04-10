@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DotConnector : MonoBehaviour
 {
     private LineRenderer _lineRenderer;
+    private readonly List<Vector3> _dotPositions = new();
 
     private void Awake()
     {
@@ -12,27 +14,56 @@ public class DotConnector : MonoBehaviour
 
     public void StartLine(Color color, Vector3 startPosition)
     {
+        _dotPositions.Clear();
+        _dotPositions.Add(startPosition);
+
         _lineRenderer.startColor = color;
         _lineRenderer.endColor = color;
-        _lineRenderer.positionCount = 1;
+
+        _lineRenderer.positionCount = 2;
         _lineRenderer.SetPosition(0, startPosition);
+        _lineRenderer.SetPosition(1, startPosition);
     }
 
     public void ConnectLine(Vector3 position)
     {
-        int count = _lineRenderer.positionCount;
-        _lineRenderer.positionCount = count + 1;
-        _lineRenderer.SetPosition(count, position);
+        _dotPositions.Add(position);
+
+        int dotCount = _dotPositions.Count;
+        _lineRenderer.positionCount = dotCount + 1;
+
+        for (int i = 0; i < _dotPositions.Count; i++)
+        {
+            _lineRenderer.SetPosition(i, _dotPositions[i]);
+        }
+
+        _lineRenderer.SetPosition(_lineRenderer.positionCount - 1, position);
     }
 
-    public void UpdateCurrentLine(Vector3 position)
+    public void UpdateCurrentLine(Vector3 pointerPosition)
     {
-        int lastIndex = _lineRenderer.positionCount - 1;
-        _lineRenderer.SetPosition(lastIndex, position);
+        if (_lineRenderer.positionCount < 2) return;
+        _lineRenderer.SetPosition(_lineRenderer.positionCount - 1, pointerPosition);
     }
 
     public void EndLine()
     {
         _lineRenderer.positionCount = 0;
+        _dotPositions.Clear();
+    }
+
+    public void CreateLine(Color color, List<Vector2Int> solution, DotTile[,] grid)
+    {
+        Vector2Int startDotPosition = solution[0];
+        Vector3 startPosition = grid[startDotPosition.x, startDotPosition.y].WorldPosition;
+        StartLine(color, startPosition);
+
+        for (int i = 1; i < solution.Count; i++)
+        {
+            Vector2Int dotPosition = solution[i];
+            Vector3 position = grid[dotPosition.x, dotPosition.y].WorldPosition;
+
+            ConnectLine(position);
+        }
     }
 }
