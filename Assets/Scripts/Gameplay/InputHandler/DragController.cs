@@ -39,7 +39,7 @@ public class DragController : MonoBehaviour
         }
     }
 
-    void HandleDragStart(Vector2 startPos)
+    private void HandleDragStart(Vector2 startPos)
     {
         // Try to pick a dot from the starting position.
         IDot dot = GetDotAtPosition(startPos);
@@ -55,7 +55,7 @@ public class DragController : MonoBehaviour
         }
     }
 
-    void HandleDragUpdate(Vector2 currentPos)
+    private void HandleDragUpdate(Vector2 currentPos)
     {
         if (_currentDraggedDots.Count == 0)
             return;
@@ -75,9 +75,11 @@ public class DragController : MonoBehaviour
                 _dotConnector.ConnectLine((dot as MonoBehaviour).transform.position);
             }
         }
+
+        _dotConnector.UpdateCurrentLine(currentPos);
     }
 
-    void HandleDragEnd()
+    private void HandleDragEnd()
     {
         // For instance, clear the dots if the chain is valid.
         ColoredBombDot coloredBombDot = _currentDraggedDots.FirstOrDefault(dot => dot is ColoredBombDot) as ColoredBombDot;
