@@ -92,8 +92,6 @@ public class GridSolver
     {
         solution = new();
 
-        if (!IsGridHasSolvableLine() && !IsGridHasNormalBomb()) return false;
-
         bool solutionFound = false;
 
         int width = _grid.GetLength(0);
@@ -124,8 +122,13 @@ public class GridSolver
             attempts++;
         } while (!solutionFound && attempts < maxAttempts);
 
-        Debug.Log("Solution not found.");
 
-        return true;
+        if (!solutionFound)
+        {
+            solutionFound = IsGridHasNormalBomb();
+        }
+
+        Debug.Log("Solution not found.");
+        return solutionFound;
     }
 }

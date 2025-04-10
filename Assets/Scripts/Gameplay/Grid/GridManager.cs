@@ -28,6 +28,8 @@ public class GridManager : MonoBehaviour
     private GridSolver _solver;
     private DotConnector _solverConnector;
 
+    public bool IsGridSolvable { get; private set; } = true;
+
     void Awake()
     {
         _grid = new DotTile[Width, Height];
@@ -85,8 +87,8 @@ public class GridManager : MonoBehaviour
     private void OnDotsConnected(OnDotsConnectedMessage message)
     {
         NotifyGameStateChanged(GameState.DOTS_SOLVED);
-        
-        _solverConnector.EndLine();
+
+        ResetSolvableState();
 
         List<Vector2Int> connectedPositions = message.ConnectedDotsPosition;
 
@@ -125,8 +127,8 @@ public class GridManager : MonoBehaviour
 
     private void OnBombExploded(OnBombExplodedMessage message)
     {
-        _solverConnector.EndLine();
-        
+        ResetSolvableState();
+
         Vector2Int position = message.Position;
         int destroyRadius = message.DestroyRadius;
 
@@ -144,18 +146,15 @@ public class GridManager : MonoBehaviour
     private void OnGridShuffled(OnGridShuffledMessage message)
     {
         _shuffler.ShuffleGrid();
-        _solverConnector.EndLine();
+        ResetSolvableState();
     }
 
     private void OnHintRequested(OnHintRequestedMessage message)
     {
         Debug.Log("Hint requested");
-        if (_solver.TryFindLineSolution(out List<Vector2Int> solution))
+        if (IsGridSolvable && _solver.TryFindLineSolution(out List<Vector2Int> solution))
         {
-            if (solution.Count <= 0) {
-                Debug.Log("Hint: Not found");
-                return;
-            }
+            IsGridSolvable = true;
 
             _solverConnector.EndLine();
 
@@ -171,6 +170,9 @@ public class GridManager : MonoBehaviour
                 _solverConnector.ConnectLine(position);
             }
         }
+        else {
+            IsGridSolvable = false;
+        }
     }
 
     private void RefillDotsColumn(int column)
@@ -185,5 +187,11 @@ public class GridManager : MonoBehaviour
     private void NotifyGameStateChanged(GameState state)
     {
         EventManager.Publish<OnGameStateChangedMessage>(new() { State = state });
+    }
+
+    private void ResetSolvableState()
+    {
+        IsGridSolvable = true;
+        _solverConnector.EndLine();
     }
 }
