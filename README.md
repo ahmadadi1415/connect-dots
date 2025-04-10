@@ -1,5 +1,3 @@
-# Connect Dots
-
 # 🎮 Match-3 Dots Grid Game (Unity)
 
 A flexible and extendable match-3 style puzzle game created in Unity, featuring multiple dot types, grid logic, connection handling, and bomb mechanics — built with clean code, modular architecture, and SOLID principles.
