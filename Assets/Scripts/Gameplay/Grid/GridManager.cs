@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,6 +25,8 @@ public class GridManager : MonoBehaviour
     private DotsManager _dotsManager;
     private BombHandler _bombHandler;
     private GridUtility _utility;
+    private GridSolver _solver;
+    private DotConnector _solverConnector;
 
     void Awake()
     {
@@ -33,6 +36,9 @@ public class GridManager : MonoBehaviour
         _dotsManager = new(_grid, _gridTransform, _utility);
         _bombHandler = new(_grid);
 
+        _solver = new GridSolver(_grid, _utility);
+        _solverConnector = GetComponentInChildren<DotConnector>();
+
         CreateGrid();
     }
 
@@ -41,6 +47,7 @@ public class GridManager : MonoBehaviour
         EventManager.Subscribe<OnDotsConnectedMessage>(OnDotsConnected);
         EventManager.Subscribe<OnBombExplodedMessage>(OnBombExploded);
         EventManager.Subscribe<OnGridShuffledMessage>(OnGridShuffled);
+        EventManager.Subscribe<OnHintRequestedMessage>(OnHintRequested);
     }
 
     private void OnDisable()
@@ -48,6 +55,7 @@ public class GridManager : MonoBehaviour
         EventManager.Unsubscribe<OnDotsConnectedMessage>(OnDotsConnected);
         EventManager.Unsubscribe<OnBombExplodedMessage>(OnBombExploded);
         EventManager.Unsubscribe<OnGridShuffledMessage>(OnGridShuffled);
+        EventManager.Unsubscribe<OnHintRequestedMessage>(OnHintRequested);
     }
 
     private void CreateGrid()
@@ -77,6 +85,8 @@ public class GridManager : MonoBehaviour
     private void OnDotsConnected(OnDotsConnectedMessage message)
     {
         NotifyGameStateChanged(GameState.DOTS_SOLVED);
+        
+        _solverConnector.EndLine();
 
         List<Vector2Int> connectedPositions = message.ConnectedDotsPosition;
 
@@ -115,6 +125,8 @@ public class GridManager : MonoBehaviour
 
     private void OnBombExploded(OnBombExplodedMessage message)
     {
+        _solverConnector.EndLine();
+        
         Vector2Int position = message.Position;
         int destroyRadius = message.DestroyRadius;
 
@@ -132,6 +144,33 @@ public class GridManager : MonoBehaviour
     private void OnGridShuffled(OnGridShuffledMessage message)
     {
         _shuffler.ShuffleGrid();
+        _solverConnector.EndLine();
+    }
+
+    private void OnHintRequested(OnHintRequestedMessage message)
+    {
+        Debug.Log("Hint requested");
+        if (_solver.TryFindLineSolution(out List<Vector2Int> solution))
+        {
+            if (solution.Count <= 0) {
+                Debug.Log("Hint: Not found");
+                return;
+            }
+
+            _solverConnector.EndLine();
+
+            Vector2Int startDotPosition = solution[0];
+            Vector3 startPosition = _grid[startDotPosition.x, startDotPosition.y].WorldPosition;
+            _solverConnector.StartLine(Color.white, startPosition);
+
+            for (int i = 1; i < solution.Count; i++)
+            {
+                Vector2Int dotPosition = solution[i];
+                Vector3 position = _grid[dotPosition.x, dotPosition.y].WorldPosition;
+
+                _solverConnector.ConnectLine(position);
+            }
+        }
     }
 
     private void RefillDotsColumn(int column)

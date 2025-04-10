@@ -7,7 +7,7 @@ public class InputHandler : MonoBehaviour
     private Vector2 _defaultPosition = new(-1000, -1000);
 
     private GameManager _gameManager;
-    
+
     [Inject]
     private void Construct(GameManager gameManager)
     {
@@ -37,6 +37,11 @@ public class InputHandler : MonoBehaviour
         {
             NotifyDragEvent(DragState.ENDED);
         }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            NotifyHintRequested();
+        }
     }
     private void HandleDotClick()
     {
@@ -61,5 +66,10 @@ public class InputHandler : MonoBehaviour
     {
         Vector2 position = _camera.ScreenToWorldPoint(Input.mousePosition);
         EventManager.Publish<OnDragEventMessage>(new() { State = state, Position = position });
+    }
+
+    private void NotifyHintRequested()
+    {
+        EventManager.Publish<OnHintRequestedMessage>(new() );
     }
 }

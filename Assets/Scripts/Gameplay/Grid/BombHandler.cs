@@ -35,7 +35,7 @@ public class BombHandler
         int width = _grid.GetLength(0);
         int height = _grid.GetLength(1);
 
-        foreach (Vector2Int direction in GridUtility.Directions)
+        foreach (Vector2Int direction in GridUtility.Direction8)
         {
             Vector2Int neighborPos = position + direction;
 
