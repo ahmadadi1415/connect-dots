@@ -101,12 +101,18 @@ public class GridSolver
         int attempts = 0;
 
         Debug.Log("Solution exists.");
+
+        List<IDot> choosenDots = new();
         do
         {
             int randomX = Random.Range(0, width);
             int randomY = Random.Range(0, height);
 
             IDot randomDot = _grid[randomX, randomY].OccupyingDot;
+
+            if (choosenDots.Contains(randomDot)) continue;
+
+            choosenDots.Add(randomDot);
             List<Vector2Int> path = _utility.FindPath(randomDot).ToList();
             Debug.Log($"Solution: path count {path.Count}");
             if (path.Count >= 3)
@@ -120,7 +126,7 @@ public class GridSolver
             Debug.Log($"Solution: not found for {randomX}, {randomY}");
 
             attempts++;
-        } while (!solutionFound && attempts < maxAttempts);
+        } while (!solutionFound && attempts < maxAttempts && choosenDots.Count < 49);
 
 
         if (!solutionFound)
